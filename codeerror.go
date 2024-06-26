@@ -1,205 +1,105 @@
 /*
-   Copyright © 2024  M.Watermann, 10247 Berlin, Germany
-               All rights reserved
-           EMail : <support@mwat.de>
+Copyright © 2024  M.Watermann, 10247 Berlin, Germany
+
+	    All rights reserved
+	EMail : <support@mwat.de>
 */
-package main
+package codeerror
+
+import (
+	"fmt"
+	"runtime"
+)
 
 //lint:file-ignore ST1017 - I prefer Yoda conditions
 
-import (
-	"context"
-	"crypto/tls"
-	"fmt"
-	"log"
-	"net"
-	"net/http"
-	"net/url"
-	"os"
-	"os/signal"
-	"path/filepath"
-	"runtime"
-	"syscall"
-	"time"
+const (
+	// The constant error message of the `ErrCodeLocation` error type.
+	StrCodeLocation = "error in code"
 
-	"github.com/NYTimes/gziphandler"
-	"github.com/mwat56/apachelogger"
-	"github.com/mwat56/errorhandler"
-	"github.com/mwat56/codeerror"
+	// How to build the string representation:
+	strPattern = "File: %q, Line: %d, Function: %q"
 )
 
-// `exit()` Log `aMessage` and terminate the program.
-func exit(aMessage string) {
-	apachelogger.Err("APPNAME/main", aMessage)
-	runtime.Gosched() // let the logger write
-	log.Fatalln(aMessage)
-} // exit()
+type ErrCodeLocation struct {
+	err      error
+	File     string
+	Function string
+	Line     int
+}
 
-// `redirHTTP()` Send HTTP clients to HTTPS server.
+// `Error()` returns a string representation of the error message
+// along with the error location.
 //
-// see: https://gist.github.com/d-schmidt/587ceec34ce1334a5e60
-func redirHTTP(aWriter http.ResponseWriter, aRequest *http.Request) {
-	// Copy the original URL and replace the scheme:
-	targetURL := url.URL{
-		Scheme:     `https`,
-		Opaque:     aRequest.URL.Opaque,
-		User:       aRequest.URL.User,
-		Host:       aRequest.URL.Host,
-		Path:       aRequest.URL.Path,
-		RawPath:    aRequest.URL.RawPath,
-		ForceQuery: aRequest.URL.ForceQuery,
-		RawQuery:   aRequest.URL.RawQuery,
-		Fragment:   aRequest.URL.Fragment,
-	}
-	target := targetURL.String()
+// It includes the file name, line number, and function name where
+// the error occurred, along with original error's text.
+//
+// Returns:
+// - `string`: a string representation of the error message and location.
+func (cl ErrCodeLocation) Error() string {
+	return fmt.Sprintf("%s %s; %v", StrCodeLocation, cl.String(), cl.err)
+} // Error()
 
-	apachelogger.Err(`APPNAME/main`, `redirecting to: `+target)
-	http.Redirect(aWriter, aRequest, target, http.StatusTemporaryRedirect)
-} // redirHTTP()
-)
+// `String()` implements the `Stringer` interface and returns a string
+// representation of the error location.
+//
+// It includes the file name, line number, and function name where
+// the error occurred.
+//
+// Returns:
+// - `string`: a string representation of the error location.
+func (cl ErrCodeLocation) String() string {
+	return fmt.Sprintf(strPattern, cl.File, cl.Line, cl.Function)
+} // String()
 
-// `setupSignals()` configures the capture of the interrupts `SIGINT`
-// `and `SIGTERM` to terminate the program gracefully.
-func setupSignals(aServer *http.Server) {
-	// handle `CTRL-C` and `kill(15)`.
-	c := make(chan os.Signal, 2)
-	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+// `Unwrap()` returns the original error that was wrapped by
+// `ErrCodeLocation`.
+//
+// Returns:
+// - `error`: the original error.
+func (cl ErrCodeLocation) Unwrap() error {
+	return cl.err
+} // Unwrap()
 
-	go func() {
-		for signal := range c {
-			msg := fmt.Sprintf("%s captured '%v', stopping program and exiting ...", filepath.Base(os.Args[0]), signal)
-			apachelogger.Err(`Nele/catchSignals`, msg)
-			log.Println(msg)
-			break
-		} // for
-
-		ctx, cancel := context.WithCancel(context.Background())
-		aServer.BaseContext = func(net.Listener) context.Context {
-			return ctx
-		}
-		aServer.RegisterOnShutdown(cancel)
-
-		ctxTimeout, cancelTimeout := context.WithTimeout(
-			context.Background(), time.Second*10)
-		defer cancelTimeout()
-		if err := aServer.Shutdown(ctxTimeout); nil != err {
-			exit(fmt.Sprintf("%s: %v", filepath.Base(os.Args[0]), err))
-		}
-	}()
-} // setupSignals()
-
-
-// Actually run the program …
-func main() {
-	var (
-		err     error
-		handler http.Handler
-		ph      *nele.TPageHandler
-	)
-	Me, _ := filepath.Abs(os.Args[0])
-
-	// Read INI files and commandline options
-	APPNAME.InitConfig()
-
-	if ph, err = nele.NewPageHandler(); nil != err {
-		nele.ShowHelp()
-		exit(fmt.Sprintf("%s: %v", Me, err))
+// `CodeError()` is a function that wraps an error with additional
+// information about the location where the error occurred. It uses
+// certain `runtime` functions to determine the file- and function-names,
+// as well as the code line. The `aLines` parameter allows for adjusting
+// the reported line number by subtracting the specified number of lines
+// from the actual line number.
+//
+// Parameters:
+// - aErr: The error to be wrapped.
+// - aLines: The number of lines to subtract from the caller's line number.
+//
+// Returns:
+// - `error`: a `ErrCodeLocation` instance that contains the original error,
+// file, function, and adjusted line number of the code causing `aErr`.
+func CodeError(aErr error, aLines int) error {
+	// Get program counter, file, line number, and status of the caller.
+	pc, eFile, eLine, ok := runtime.Caller(1)
+	if !ok {
+		// it was not possible to recover the information
+		return aErr
 	}
 
-	// Setup the errorpage handler:
-	handler = errorhandler.Wrap(ph, ph)
-
-	// Inspect `gzip` commandline argument and setup the Gzip handler:
-	if APPNAME.AppArgs.GZip {
-		handler = gziphandler.GzipHandler(handler)
+	// Adjust the line number if `aLines` is greater than zero and
+	// the calculated line number is not less than `aLines`.
+	if 0 < aLines && eLine >= aLines {
+		eLine -= aLines
 	}
 
-	// Inspect logging commandline arguments and setup the `ApacheLogger`:
-	handler = apachelogger.Wrap(handler, nele.AppArgs.AccessLog, nele.AppArgs.ErrorLog)
+	// Get the name of the function for the program counter.
+	eFunction := runtime.FuncForPC(pc).Name()
 
-	ctxTimeout, cancelTimeout := context.WithTimeout(
-		context.Background(), time.Second*10)
-	defer cancelTimeout()
-
-	// We need a `server` reference to use it in `setupSignals()`
-	// and to set some reasonable timeouts:
-	server := &http.Server{
-		// The TCP address for the server to listen on:
-		Addr: APPNAME.AppArgs.Addr,
-		// Return the base context for incoming requests on this server:
-		BaseContext: func(net.Listener) context.Context {
-			return ctxTimeout
-		},
-		// Request handler to invoke:
-		Handler: handler,
-		// Set timeouts so that a slow or malicious client
-		// doesn't hold resources forever
-		//
-		// The maximum amount of time to wait for the next request;
-		// if IdleTimeout is zero, the value of ReadTimeout is used:
-		IdleTimeout: 0,
-		// The amount of time allowed to read request headers:
-		ReadHeaderTimeout: 10 * time.Second,
-		// The maximum duration for reading the entire request,
-		// including the body:
-		ReadTimeout: 10 * time.Second,
-		// The maximum duration before timing out writes of the response:
-		// WriteTimeout: 10 * time.Second,
-		WriteTimeout: -1, // see whether this eliminates "i/o timeout HTTP/1.0"
+	// Return a new instance of `ErrCodeLocation` with the provided error,
+	// file, function, and adjusted line number.
+	return &ErrCodeLocation{
+		err:      aErr,
+		File:     eFile,
+		Function: eFunction,
+		Line:     eLine,
 	}
-	if 0 < len(APPMAME.AppArgs.ErrorLog) {
-		apachelogger.SetErrLog(server)
-	}
-	setupSignals(server)
-
-	if 0 < len(APPNAME.AppArgs.CertKey) && (0 < len(APPNAME.AppArgs.CertPem)) {
-		// start the HTTP to HTTPS redirector:
-		go http.ListenAndServe(APPNAME.AppArgs.Addr, http.HandlerFunc(redirHTTP))
-
-		// see:
-		// https://ssl-config.mozilla.org/#server=golang&version=1.14.1&config=old&guideline=5.4
-		server.TLSConfig = &tls.Config{
-			MinVersion:               tls.VersionTLS10,
-			PreferServerCipherSuites: true,
-			CipherSuites: []uint16{
-				tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
-				tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-				tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-				tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,
-				tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
-				tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
-				tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-				tls.TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA,
-				tls.TLS_ECDHE_RSA_WITH_RC4_128_SHA,
-				tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
-				tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
-				tls.TLS_ECDHE_ECDSA_WITH_RC4_128_SHA,
-				tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
-				tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
-				tls.TLS_RSA_WITH_AES_128_CBC_SHA256,
-				tls.TLS_RSA_WITH_AES_256_CBC_SHA,
-				tls.TLS_RSA_WITH_AES_128_CBC_SHA,
-				tls.TLS_RSA_WITH_3DES_EDE_CBC_SHA,
-				tls.TLS_RSA_WITH_RC4_128_SHA,
-				tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256, // #nosec G402
-			},
-		} // #nosec G402
-		// server.TLSNextProto = make(map[string]func(*http.Server, *tls.Conn, http.Handler))
-
-		s := fmt.Sprintf("%s listening HTTPS at: %s", Me, APPNAME.AppArgs.Addr)
-		log.Println(s)
-		apachelogger.Log("APPNAME/main", s)
-		exit(fmt.Sprintf("%s: %v", Me,
-			server.ListenAndServeTLS(APPNAME.AppArgs.CertPem, APPNAME.AppArgs.CertKey)))
-		return
-	}
-
-	s := fmt.Sprintf("%s listening HTTP at: %s", Me, APPNAME.AppArgs.Addr)
-	log.Println(s)
-	apachelogger.Log("APPNAME/main", s)
-	exit(fmt.Sprintf("%s: %v", Me, server.ListenAndServe()))
-} // main()
+} // CodeError()
 
 /* _EoF_ */
