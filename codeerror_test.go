@@ -22,11 +22,7 @@ func TestErrCodeLocation_Error(t *testing.T) {
 	}
 	w1 := fmt.Sprintf("%s", cl1) // use Stringer interface
 
-	cl2 := fmt.Errorf("dummy")
-	e2 := fmt.Errorf("some second error")
-	if nil != e2 {
-		cl2 = CodeError(e2, 2)
-	}
+	cl2 := CodeError(nil, 2)
 	w2 := fmt.Sprintf("%s", cl2)
 
 	tests := []struct {
@@ -45,26 +41,24 @@ func TestErrCodeLocation_Error(t *testing.T) {
 				t.Errorf("%q: ErrCodeLocation.Error() =\n%q,\nwant %q",
 					tt.name, got, tt.want)
 			}
+
+			t.Log(tt.want, "\n")
 		})
 	}
 } // testErrCodeLocation()
 
 func TestErrCodeLocation_String(t *testing.T) {
 	var (
-		cl1, cl2 ErrCodeLocation
+		cl1 ErrCodeLocation
 	)
 	e1 := fmt.Errorf("some first error")
-	cl11 := CodeError(e1, 1)
+	cl11 := CodeError(e1, 1).(*ErrCodeLocation)
 	if errors.Is(cl11, cl1) {
-		cl1 = cl11.(ErrCodeLocation)
+		cl1 = *cl11
 	}
 	w1 := fmt.Sprintf(strPattern, cl1.File, cl1.Line, cl1.Function)
 
-	e2 := fmt.Errorf("some second error")
-	cl22 := CodeError(e2, 1)
-	if errors.Is(cl22, cl2) {
-		cl2 = cl22.(ErrCodeLocation)
-	}
+	cl2 := CodeError(nil, 0).(*ErrCodeLocation)
 	w2 := fmt.Sprintf(strPattern, cl2.File, cl2.Line, cl2.Function)
 
 	tests := []struct {
@@ -73,7 +67,7 @@ func TestErrCodeLocation_String(t *testing.T) {
 		want   string
 	}{
 		{"1", cl1, w1},
-		{"2", cl2, w2},
+		{"2", *cl2, w2},
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
@@ -83,6 +77,8 @@ func TestErrCodeLocation_String(t *testing.T) {
 				t.Errorf("%q: ErrCodeLocation.String() =\n%q,\nwant %q",
 					tt.name, got, tt.want)
 			}
+
+			t.Log(tt.want, "\n")
 		})
 	}
 } // TestErrCodeLocation_String()
@@ -90,13 +86,15 @@ func TestErrCodeLocation_String(t *testing.T) {
 func TestErrCodeLocation_Unwrap(t *testing.T) {
 	e1 := fmt.Errorf("some first error")
 	cl1 := CodeError(e1, 1)
+	cl2 := CodeError(nil, 0)
 
 	tests := []struct {
 		name    string
-		fields  error // i.e. ErrCodeLocation
+		fields  error
 		wantErr error
 	}{
 		{"1", cl1, e1},
+		{"2", cl2, nil},
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
@@ -106,6 +104,8 @@ func TestErrCodeLocation_Unwrap(t *testing.T) {
 				t.Errorf("%q: ErrCodeLocation.Unwrap() error = %v, wantErr %v",
 					tt.name, got, tt.wantErr)
 			}
+
+			t.Log(tt.wantErr, "\n")
 		})
 	}
 } // TestErrCodeLocation_Unwrap()
