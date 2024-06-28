@@ -9,16 +9,17 @@ package sourceerror
 import (
 	"fmt"
 	"runtime"
+	"runtime/debug"
 )
 
 //lint:file-ignore ST1017 - I prefer Yoda conditions
 
 const (
 	// The constant error message of the `ErrSourceLocation` error type.
-	StrCodeLocation = "error in code"
+	StrCodeLocation = "error in source"
 
 	// How to build the string representation:
-	strPattern = "File: %q, Line: %d, Function: %q"
+	strPattern = "File: %q, Line: %d, Function: %q. Stack: %v"
 )
 
 type ErrSourceLocation struct {
@@ -26,10 +27,11 @@ type ErrSourceLocation struct {
 	File     string
 	Function string
 	Line     int
+	Stack    string
 }
 
 var (
-	// If set true, the SourceError function basically become a NoOp.
+	// If set `true`, the `SourceError()` function basically becomes a NoOp.
 	NODEBUG bool
 )
 
@@ -42,7 +44,8 @@ var (
 // Returns:
 // - `string`: a string representation of the error message and location.
 func (se ErrSourceLocation) Error() string {
-	return fmt.Sprintf("%s %s; %v", StrCodeLocation, se.String(), se.err)
+	return fmt.Sprintf("%s %s; %v",
+		StrCodeLocation, se.String(), se.err)
 } // Error()
 
 // `String()` implements the `Stringer` interface and returns a string
@@ -54,7 +57,8 @@ func (se ErrSourceLocation) Error() string {
 // Returns:
 // - `string`: a string representation of the error location.
 func (se ErrSourceLocation) String() string {
-	return fmt.Sprintf(strPattern, se.File, se.Line, se.Function)
+	return fmt.Sprintf(strPattern,
+		se.File, se.Line, se.Function, se.Stack)
 } // String()
 
 // `Unwrap()` returns the original error that was wrapped by
@@ -69,16 +73,16 @@ func (se ErrSourceLocation) Unwrap() error {
 // `SourceError()` is a function that wraps an error with additional
 // information about the location where the error occurred. It uses
 // certain `runtime` functions to determine the file- and function-names,
-// as well as the code line. The `aLines` parameter allows for adjusting
-// the reported line number by subtracting the specified number of lines
-// from the actual line number.
+// as well as the code line and the call stack.
+// The `aLines` parameter allows for adjusting the reported line number by
+// subtracting the specified number of lines from the actual line number.
 //
 // NOTE: If the global `NODEBUG` flag is `true`, this function simply
 // returns he given `aErr`, skipping the error location investigation.
 //
 // Parameters:
-// - aErr: The error to be wrapped.
-// - aLines: The number of lines to subtract from the caller's line number.
+// - `aErr`: The error to be wrapped.
+// - `aLines`: The number of lines to subtract from the caller's line number.
 //
 // Returns:
 // - `error`: A new `ErrSourceLocation` instance that contains the original
@@ -91,8 +95,7 @@ func SourceError(aErr error, aLines int) error {
 	// Get program counter, file, line number, and status of the caller.
 	pc, eFile, eLine, ok := runtime.Caller(1)
 	if !ok {
-		// it was not possible to recover the information
-		return aErr
+		return aErr // not possible to recover the information
 	}
 
 	// Adjust the line number if `aLines` is greater than zero and
@@ -104,6 +107,9 @@ func SourceError(aErr error, aLines int) error {
 	// Get the name of the function for the program counter.
 	eFunction := runtime.FuncForPC(pc).Name()
 
+	// Get a formatted stack trace of the goroutine that calls it.
+	eStack := string(debug.Stack())
+
 	// Return a new instance of `ErrSourceLocation` with the provided error,
 	// file, function, and adjusted line number.
 	return &ErrSourceLocation{
@@ -111,6 +117,7 @@ func SourceError(aErr error, aLines int) error {
 		File:     eFile,
 		Function: eFunction,
 		Line:     eLine,
+		Stack:    eStack,
 	}
 } // SourceError()
 
