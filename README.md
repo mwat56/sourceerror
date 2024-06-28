@@ -21,18 +21,8 @@
 ## Purpose
 
 This small module offers the `ErrCodeLocation` error type that wraps another error instance, along with the file name, line number, and function name where the error occurred.
-It can be used by calling the provided constructor function:
-
-	// here some error occurs:
-	err := someFunction()
-	if nil != err {
-		err = SourceError(err, 2)
-		// `err` now wraps the original 'err` and points 2 lines
-		// up i.e. the line where the error appeared.
-
-		return err
-		// or perform some proper error handling here
-	}
+The `ErrCodeLocation` error can be used especially during development to help finding program errors.
+Once the source code is free of avoidable errors, one just sets the `NODEBUG` flag to true without having to change error handling at all.
 
 ## Installation
 
@@ -42,13 +32,31 @@ You can use `Go` to install this package for you:
 
 ## Usage
 
-    //TODO
+It can be used by calling the provided constructor function:
+
+	import (
+		se "github.com/mwat56/sourceerror"
+	)
+
+	// ...
+
+	// uncomment the next line when the code is production ready:
+	// se.NODEBUG = true
+
+	// here some error occurs:
+	err := someFunction()
+	if nil != err {
+		err = se.SourceError(err, 2)
+		// `err` now wraps the original 'err` and points two
+		// lines up i.e. the line where the error appeared.
+
+		return err
+		// ... or perform some proper error handling here
+	}
 
 ## Libraries
 
-The following external libraries were used building `sourceerror`:
-
-* (none)
+No external libraries were used building `sourceerror`.
 
 ## Licence
 
