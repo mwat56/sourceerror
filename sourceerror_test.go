@@ -4,7 +4,7 @@ Copyright © 2024  M.Watermann, 10247 Berlin, Germany
 	    All rights reserved
 	EMail : <support@mwat.de>
 */
-package codeerror
+package sourceerror
 
 import (
 	"errors"
@@ -14,20 +14,20 @@ import (
 
 //lint:file-ignore ST1017 - I prefer Yoda conditions
 
-func TestErrCodeLocation_Error(t *testing.T) {
+func TestErrSourceLocation_Error(t *testing.T) {
 	cl1 := fmt.Errorf("dummy")
 	e1 := fmt.Errorf("some first error")
 	if nil != e1 {
-		cl1 = CodeError(e1, 2)
+		cl1 = SourceError(e1, 2)
 	}
 	w1 := fmt.Sprintf("%s", cl1) // use Stringer interface
 
-	cl2 := CodeError(nil, 2)
+	cl2 := SourceError(nil, 2)
 	w2 := fmt.Sprintf("%s", cl2)
 
 	tests := []struct {
 		name   string
-		fields error // i.e. ErrCodeLocation
+		fields error // i.e. ErrSourceLocation
 		want   string
 	}{
 		{"1", cl1, w1},
@@ -36,34 +36,34 @@ func TestErrCodeLocation_Error(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cl := tt.fields
-			if got := cl.Error(); got != tt.want {
-				t.Errorf("%q: ErrCodeLocation.Error() =\n%q,\nwant %q",
+			se := tt.fields
+			if got := se.Error(); got != tt.want {
+				t.Errorf("%q: ErrSourceLocation.Error() =\n%q,\nwant %q",
 					tt.name, got, tt.want)
 			}
 
 			t.Log(tt.want, "\n")
 		})
 	}
-} // testErrCodeLocation()
+} // TestErrSourceLocation_Error()
 
-func TestErrCodeLocation_String(t *testing.T) {
+func TestErrSourceLocation_String(t *testing.T) {
 	var (
-		cl1 ErrCodeLocation
+		cl1 ErrSourceLocation
 	)
 	e1 := fmt.Errorf("some first error")
-	cl11 := CodeError(e1, 1).(*ErrCodeLocation)
+	cl11 := SourceError(e1, 1).(*ErrSourceLocation)
 	if errors.Is(cl11, cl1) {
 		cl1 = *cl11
 	}
 	w1 := fmt.Sprintf(strPattern, cl1.File, cl1.Line, cl1.Function)
 
-	cl2 := CodeError(nil, 0).(*ErrCodeLocation)
+	cl2 := SourceError(nil, 0).(*ErrSourceLocation)
 	w2 := fmt.Sprintf(strPattern, cl2.File, cl2.Line, cl2.Function)
 
 	tests := []struct {
 		name   string
-		fields ErrCodeLocation
+		fields ErrSourceLocation
 		want   string
 	}{
 		{"1", cl1, w1},
@@ -72,21 +72,21 @@ func TestErrCodeLocation_String(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cl := tt.fields
-			if got := cl.String(); got != tt.want {
-				t.Errorf("%q: ErrCodeLocation.String() =\n%q,\nwant %q",
+			se := tt.fields
+			if got := se.String(); got != tt.want {
+				t.Errorf("%q: ErrSourceLocation.String() =\n%q,\nwant %q",
 					tt.name, got, tt.want)
 			}
 
 			t.Log(tt.want, "\n")
 		})
 	}
-} // TestErrCodeLocation_String()
+} // TestErrSourceLocation_String()
 
-func TestErrCodeLocation_Unwrap(t *testing.T) {
+func TestErrSourceLocation_Unwrap(t *testing.T) {
 	e1 := fmt.Errorf("some first error")
-	cl1 := CodeError(e1, 1)
-	cl2 := CodeError(nil, 0)
+	cl1 := SourceError(e1, 1)
+	cl2 := SourceError(nil, 0)
 
 	tests := []struct {
 		name    string
@@ -99,15 +99,15 @@ func TestErrCodeLocation_Unwrap(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cl := tt.fields.(*ErrCodeLocation)
-			if got := cl.Unwrap(); got != tt.wantErr {
-				t.Errorf("%q: ErrCodeLocation.Unwrap() error = %v, wantErr %v",
+			se := tt.fields.(*ErrSourceLocation)
+			if got := se.Unwrap(); got != tt.wantErr {
+				t.Errorf("%q: ErrSourceLocation.Unwrap() error = %v, wantErr %v",
 					tt.name, got, tt.wantErr)
 			}
 
 			t.Log(tt.wantErr, "\n")
 		})
 	}
-} // TestErrCodeLocation_Unwrap()
+} // TestErrSourceLocation_Unwrap()
 
 /* _EoF_ */

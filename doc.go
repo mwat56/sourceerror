@@ -1,10 +1,10 @@
 /*
+Package sourceerror implements an error type that wraps another error instance.
+That error type includes the file name, line number, and function name where the error occurred, along with original error's text.
 
-Package codeerror implements ...
-
-    Copyright © 2024 M.Watermann, 10247 Berlin, Germany
-                    All rights reserved
-                EMail : <support@mwat.de>
+	Copyright © 2024 M.Watermann, 10247 Berlin, Germany
+	                All rights reserved
+	            EMail : <support@mwat.de>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -19,8 +19,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see the
 [GNU General Public License](http://www.gnu.org/licenses/gpl.html)
 for details.
-
 */
-package codeerror
+package sourceerror
 
 /* _EoF_ */

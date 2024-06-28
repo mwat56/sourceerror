@@ -1,3 +1,3 @@
-module github.com/mwat56/codeerror
+module github.com/mwat56/sourceerror
 
 go 1.22

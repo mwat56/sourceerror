@@ -1,25 +1,44 @@
-# codeerror
+# SourceError
 
 [![golang](https://img.shields.io/badge/Language-Go-green.svg)](https://golang.org/)
-[![GoDoc](https://godoc.org/github.com/mwat56/codeerror?status.svg)](https://godoc.org/github.com/mwat56/codeerror)
-[![Go Report](https://goreportcard.com/badge/github.com/mwat56/codeerror)](https://goreportcard.com/report/github.com/mwat56/codeerror)
-[![Issues](https://img.shields.io/github/issues/mwat56/codeerror.svg)](https://github.com/mwat56/codeerror/issues?q=is%3Aopen+is%3Aissue)
-[![Size](https://img.shields.io/github/repo-size/mwat56/codeerror.svg)](https://github.com/mwat56/codeerror/)
-[![Tag](https://img.shields.io/github/tag/mwat56/codeerror.svg)](https://github.com/mwat56/codeerror/tags)
-[![View examples](https://img.shields.io/badge/learn%20by-examples-0077b3.svg)](https://github.com/mwat56/codeerror/blob/main/_demo/demo.go)
-[![License](https://img.shields.io/github/mwat56/codeerror.svg)](https://github.com/mwat56/codeerror/blob/main/LICENSE)
+[![GoDoc](https://godoc.org/github.com/mwat56/sourceerror?status.svg)](https://godoc.org/github.com/mwat56/sourceerror)
+[![Go Report](https://goreportcard.com/badge/github.com/mwat56/sourceerror)](https://goreportcard.com/report/github.com/mwat56/sourceerror)
+[![Issues](https://img.shields.io/github/issues/mwat56/sourceerror.svg)](https://github.com/mwat56/sourceerror/issues?q=is%3Aopen+is%3Aissue)
+[![Size](https://img.shields.io/github/repo-size/mwat56/sourceerror.svg)](https://github.com/mwat56/sourceerror/)
+[![Tag](https://img.shields.io/github/tag/mwat56/sourceerror.svg)](https://github.com/mwat56/sourceerror/tags)
+[![View examples](https://img.shields.io/badge/learn%20by-examples-0077b3.svg)](https://github.com/mwat56/sourceerror/blob/main/_demo/demo.go)
+[![License](https://img.shields.io/github/mwat56/sourceerror.svg)](https://github.com/mwat56/sourceerror/blob/main/LICENSE)
+
+- [SourceError](#sourceerror)
+	- [Purpose](#purpose)
+	- [Installation](#installation)
+	- [Usage](#usage)
+	- [Libraries](#libraries)
+	- [Licence](#licence)
 
 ----
 
 ## Purpose
 
-    //TODO
+This small module offers the `ErrCodeLocation` error type that wraps another error instance, along with the file name, line number, and function name where the error occurred.
+It can be used by calling the provided constructor function:
+
+	// here some error occurs:
+	err := someFunction()
+	if nil != err {
+		err = SourceError(err, 2)
+		// `err` now wraps the original 'err` and points 2 lines
+		// up i.e. the line where the error appeared.
+
+		return err
+		// or perform some proper error handling here
+	}
 
 ## Installation
 
 You can use `Go` to install this package for you:
 
-    go get -u github.com/mwat56/codeerror
+    go get -u github.com/mwat56/sourceerror
 
 ## Usage
 
@@ -27,9 +46,9 @@ You can use `Go` to install this package for you:
 
 ## Libraries
 
-The following external libraries were used building `codeerror`:
+The following external libraries were used building `sourceerror`:
 
-* [ApacheLogger](https://github.com/mwat56/apachelogger)
+* (none)
 
 ## Licence
 
