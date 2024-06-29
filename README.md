@@ -20,9 +20,22 @@
 
 ## Purpose
 
-This small module offers the `ErrCodeLocation` error type that wraps another error instance, along with the file name, line number, and function name where the error occurred.
-The `ErrCodeLocation` error can be used especially during development to help finding program errors.
-Once the source code is free of avoidable errors, one just sets the `NODEBUG` flag to true without having to change error handling at all.
+This module offers the `ErrSource` error type that wraps another error instance, along with the file name, line number, and function name where the error occurred.
+
+All public fields should be considered R/O - there really isn't any reason to modify those fields apart from confusing yourself :-)
+The fields are as follows:
+
+	- `File`: The source file where the error was encountered.
+	- `Function`: The function wherein the error was encountered
+	- `Line`: The code line within the `File`.
+	- `Stack`: The call stack to where the error was created.
+
+The `ErrSource` methods `Error()` and `String()` mention another field
+
+	- `Error`: The string representation of the wrapped error.
+
+The `ErrSource` can be used especially during development to help finding problems in the source code.
+Once the source code is free of avoidable errors, one just sets the `NODEBUG` flag to `true` without having to change the source code otherwise.
 
 ## Installation
 
@@ -35,24 +48,29 @@ You can use `Go` to install this package for you:
 It can be used by calling the provided constructor function:
 
 	import (
-		se "github.com/mwat56/sourceerror"
+		"github.com/mwat56/sourceerror"
 	)
 
 	// ...
 
-	// uncomment the next line when the code is production ready:
-	// se.NODEBUG = true
+	// uncomment the next line when your code is production ready:
+	// sourceerror.NODEBUG = true
+
+	// ...
 
 	// here some error occurs:
 	err := someFunction()
 	if nil != err {
-		err = se.SourceError(err, 2)
-		// `err` now wraps the original 'err` and points two
-		// lines up i.e. the line where the error appeared.
+		err = sourceerror.Wrap(err, 2)
+		// `err` now wraps the original 'err` and points
+		// two lines up i.e. to the line where the error
+		// was encountered.
 
 		return err
 		// ... or perform some proper error handling here
 	}
+
+	// ...
 
 ## Libraries
 
