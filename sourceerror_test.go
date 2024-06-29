@@ -18,15 +18,21 @@ import (
 func TestErrSourceLocation_Error(t *testing.T) {
 	runtime.GOMAXPROCS(1)
 
-	cl1 := fmt.Errorf("dummy")
-	e1 := fmt.Errorf("some first error")
+	cl1 := errors.New("dummy")
+	e1 := errors.New("some first error")
 	if nil != e1 {
 		cl1 = SourceError(e1, 2)
 	}
 	w1 := fmt.Sprintf("%s", cl1) // use Stringer interface
 
-	cl2 := SourceError(nil, 2)
+	cl2 := SourceError(nil, 0)
 	w2 := fmt.Sprintf("%s", cl2)
+
+	cl3 := SourceError(cl1, 0)
+	w3 := fmt.Sprintf("%s", cl3)
+
+	cl4 := SourceError(cl1, 0)
+	w4 := fmt.Sprintf("%s", cl4)
 
 	tests := []struct {
 		name string
@@ -35,6 +41,8 @@ func TestErrSourceLocation_Error(t *testing.T) {
 	}{
 		{"1", cl1, w1},
 		{"2", cl2, w2},
+		{"3", cl3, w3},
+		{"4", cl4, w4},
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
@@ -57,7 +65,7 @@ func TestErrSourceLocation_String(t *testing.T) {
 	var (
 		cl1 ErrSourceLocation
 	)
-	e1 := fmt.Errorf("some first error")
+	e1 := errors.New("some first error")
 	cl11 := SourceError(e1, 1).(*ErrSourceLocation)
 	if errors.Is(cl11, cl1) {
 		cl1 = *cl11
@@ -93,7 +101,7 @@ func TestErrSourceLocation_String(t *testing.T) {
 func TestErrSourceLocation_Unwrap(t *testing.T) {
 	runtime.GOMAXPROCS(1)
 
-	e1 := fmt.Errorf("some first error")
+	e1 := errors.New("some first error")
 	cl1 := SourceError(e1, 1)
 	cl2 := SourceError(nil, 0)
 
