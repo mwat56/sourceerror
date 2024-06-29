@@ -35,6 +35,24 @@ var (
 	NODEBUG bool
 )
 
+// `init()` is a special function in Go that is automatically called when
+// a package is imported. It is used to initialise variables or perform
+// any necessary setup for the package.
+//
+// Here, the `init()` function is used to ensure that the `ErrSourceLocation`
+// type implements the `error` and `fmt.Stringer` interfaces.
+// The `error` interface is required for any type that represents an error
+// in Go, and the `fmt.Stringer` interface is used to provide a `String()`
+// method for formatting the error message.
+func init() {
+	var (
+		_ error        = ErrSourceLocation{}
+		_ error        = (*ErrSourceLocation)(nil)
+		_ fmt.Stringer = ErrSourceLocation{}
+		_ fmt.Stringer = (*ErrSourceLocation)(nil)
+	)
+} // init()
+
 // `Error()` returns a string representation of the error message
 // along with the error location.
 //
