@@ -44,6 +44,10 @@ var (
 	// If set `true`, the `Wrap()` function will skip the error
 	// location investigation.
 	NODEBUG bool
+
+	// If set `true`, the `Wrap()` function will skip the error's
+	// call-stack investigation.
+	NOSTACK bool
 )
 
 // `Error()` returns a string representation of the error message
@@ -139,7 +143,10 @@ func Wrap(aErr error, aLines int) error {
 	// Get program counter, file, line number, and status of the caller.
 	pc, eFile, eLine, ok := runtime.Caller(1)
 	if !ok {
-		return aErr // not possible to recover the information
+		// not possible to recover the information
+		return &ErrSource{
+			err: aErr,
+		}
 	}
 
 	// Adjust the line number if `aLines` is greater than zero and
@@ -151,14 +158,19 @@ func Wrap(aErr error, aLines int) error {
 	// Get the name of the function for the program counter.
 	eFunction := runtime.FuncForPC(pc).Name()
 
-	// Return a new instance of `ErrSourceLocation` with the provided error,
+	var eStack []byte
+	if !NOSTACK {
+		eStack = debug.Stack()
+	}
+
+	// Return a new instance of `ErrSource` with the provided error,
 	// file, function, adjusted line number, and stack trace.
 	return &ErrSource{
 		err:      aErr,
 		File:     eFile,
 		Function: eFunction,
 		Line:     eLine,
-		Stack:    debug.Stack(),
+		Stack:    eStack,
 	}
 } // Wrap()
 

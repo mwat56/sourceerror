@@ -98,6 +98,24 @@ func TestErrSourceLocation_String(t *testing.T) {
 	}
 } // TestErrSourceLocation_String()
 
+func TestErrSourceLocation_StringNODEBUG(t *testing.T) {
+	NODEBUG = true
+	defer func() {
+		NODEBUG = false
+	}()
+
+	TestErrSourceLocation_String(t)
+} // TestErrSourceLocation_StringNODEBUG()
+
+func TestErrSourceLocation_StringNOSTACK(t *testing.T) {
+	NOSTACK = true
+	defer func() {
+		NOSTACK = false
+	}()
+
+	TestErrSourceLocation_String(t)
+} // TestErrSourceLocation_StringNOSTACK()
+
 func TestErrSourceLocation_Unwrap(t *testing.T) {
 	e1 := errors.New("some first error")
 	cl1 := Wrap(e1, 1)

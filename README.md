@@ -35,7 +35,8 @@ The `ErrSource` methods `Error()` and `String()` mention another field
 	- `Error`: The string representation of the wrapped error.
 
 The `ErrSource` can be used especially during development to help finding problems in the source code.
-Once the source code is free of avoidable errors, one just sets the `NODEBUG` flag to `true` without having to change the source code otherwise.
+In case the error call-stacks are not needed just set the `NOSTACK` flag to `true` (which will save some time an memory).
+Once the source code is free of avoidable errors, just set the `NODEBUG` flag to `true` without any need to change the source code otherwise.
 
 ## Installation
 
@@ -52,6 +53,9 @@ It can be used by calling the provided constructor function:
 	)
 
 	// ...
+
+	// if the call-stacks are not needed:
+	sourceerror.NOSTACK = true
 
 	// uncomment the next line when your code is production ready:
 	// sourceerror.NODEBUG = true
