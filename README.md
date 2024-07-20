@@ -66,7 +66,7 @@ It can be used by calling the provided constructor function:
 	err := someFunction()
 	if nil != err {
 		err = sourceerror.Wrap(err, 2)
-		// `err` now wraps the original 'err` and points
+		// `err` now wraps the original `err` and points
 		// two lines up i.e. to the line where the error
 		// was encountered.
 
