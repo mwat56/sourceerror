@@ -20,9 +20,10 @@
 
 ## Purpose
 
-This module offers the `ErrSource` error type that wraps another error instance, along with the file name, line number, and function name where the error occurred.
+This module offers the `ErrSource` error type that wraps another error instance, along with the file name, line number, and function name where the initial error occurred, along with original error's message text and a call stack.
 
-All public fields should be considered R/O - there really isn't any reason to modify those fields apart from confusing yourself :-)
+The public fields should be considered R/O - there really isn't any reason to modify those fields apart from confusing yourself :-)
+
 The fields are as follows:
 
 	- `File`: The source file where the error was encountered.
@@ -30,42 +31,41 @@ The fields are as follows:
 	- `Line`: The code line within the `File`.
 	- `Stack`: The call stack to where the error was created.
 
-The `ErrSource` methods `Error()` and `String()` mention another field
+The `ErrSource` type provides the methods `Error()` , `String()` and `Unwrap()` as required by the `error` interface.
 
-	- `Error`: The string representation of the wrapped error.
+The `ErrSource` can be very useful especially during development to help finding problems in the source code.
+In case the error call-stacks are not needed just set the `NOSTACK` flag to `true` (which will save some time and memory).
 
-The `ErrSource` can be used especially during development to help finding problems in the source code.
-In case the error call-stacks are not needed just set the `NOSTACK` flag to `true` (which will save some time an memory).
-Once the source code is free of avoidable errors, just set the `NODEBUG` flag to `true` without any need to change the source code otherwise.
+Once the source code is free of avoidable errors, just set the `NODEBUG` flag to `true` – without any need to change the source code otherwise.
 
 ## Installation
 
 You can use `Go` to install this package for you:
 
-    go get -u github.com/mwat56/sourceerror
+    go get -u github.com/mwat56/sourceerror@latest
 
 ## Usage
 
-It can be used by calling the provided constructor function:
+It can be used by calling the provided constructor function `New()`:
 
 	import (
-		"github.com/mwat56/sourceerror"
+		se "github.com/mwat56/sourceerror"
 	)
 
 	// ...
 
-	// if the call-stacks are not needed:
-	sourceerror.NOSTACK = true
+	// IF the call-stacks are not needed:
+	se.NOSTACK = true
 
 	// uncomment the next line when your code is production ready:
-	// sourceerror.NODEBUG = true
+	// se.NODEBUG = true
 
 	// ...
 
 	// here some error occurs:
 	err := someFunction()
 	if nil != err {
-		err = sourceerror.Wrap(err, 2)
+		err = se.New(err, 2)
 		// `err` now wraps the original `err` and points
 		// two lines up i.e. to the line where the error
 		// was encountered.
@@ -82,7 +82,7 @@ No external libraries were used building `sourceerror`.
 
 ## Licence
 
-        Copyright © 2024 M.Watermann, 10247 Berlin, Germany
+        Copyright © 2024, 2025  M.Watermann, 10247 Berlin, Germany
                         All rights reserved
                     EMail : <support@mwat.de>
 

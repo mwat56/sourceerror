@@ -1,10 +1,13 @@
 /*
-Package sourceerror implements an error type that wraps another error instance.
-That error type includes the file name, line number, and function name where the error occurred, along with original error's text.
+Package `sourceerror` implements a new error type that wraps another error
+instance. That error type includes the file name, line number, and function
+name where the initial error occurred, along with original error's message
+text and a call stack.
 
-	Copyright © 2024 M.Watermann, 10247 Berlin, Germany
-	                All rights reserved
-	            EMail : <support@mwat.de>
+Copyright © 2024, 2025  M.Watermann, 10247 Berlin, Germany
+
+	    All rights reserved
+	EMail : <support@mwat.de>
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
